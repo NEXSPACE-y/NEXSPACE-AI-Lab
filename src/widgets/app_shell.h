@@ -26,6 +26,9 @@
 
 namespace nexspace {
 
+class CommandInputBar;
+class CommandInputPage;
+
 class AppShell : public QMainWindow {
     Q_OBJECT
 public:
@@ -36,12 +39,15 @@ private slots:
     void onTicketSelected(const QString& ticketId);
     void onSidebarIndexChanged(int row);
     void onSettingsApplied(const QVariantMap& settings);
+    void onCommandSubmitRequested(const CreateTicketInput& input);
 
 private:
     void buildUi();
     void applyStyle();
     void updateErrorIndicators();
     void setDetailFromSelected();
+    void applyCommandInputHints();
+    void clearCommandInputMessages();
 
     std::unique_ptr<EngineAdapter> m_adapter;
     NoopSoundCueAdapter m_soundCueAdapter;
@@ -59,6 +65,8 @@ private:
     HistoryTable* m_history = nullptr;
     SettingsPage* m_settings = nullptr;
     SystemStatusPanel* m_systemStatus = nullptr;
+    CommandInputBar* m_commandInputBar = nullptr;
+    CommandInputPage* m_commandInputPage = nullptr;
 
     QVector<Ticket> m_previousTickets;
     QVector<Ticket> m_tickets;

@@ -1,4 +1,6 @@
 #include "app_shell.h"
+#include "command_input_bar.h"
+#include "command_input_page.h"
 #include <QListWidget>
 #include <QSplitter>
 #include <QStackedWidget>
@@ -38,13 +40,16 @@ void AppShell::buildUi() {
     m_history = new HistoryTable();
     m_settings = new SettingsPage();
     m_systemStatus = new SystemStatusPanel();
+    m_commandInputBar = new CommandInputBar();
+    m_commandInputPage = new CommandInputPage();
 
-    m_sidebar->addItems({"軍議盤", "札場", "部署一覧", "配下一覧", "監察記録", "軍務履歴", "軍令設定", "本陣状態"});
+    m_sidebar->addItems({"軍議盤", "札場", "軍令入力", "部署一覧", "配下一覧", "監察記録", "軍務履歴", "軍令設定", "本陣状態"});
     m_sidebar->setFixedWidth(170);
     m_sidebar->setCurrentRow(0);
 
     m_pages->addWidget(m_dashboard);
     m_pages->addWidget(m_ticketBoard);
+    m_pages->addWidget(m_commandInputPage);
     m_pages->addWidget(m_departmentPage);
     m_pages->addWidget(m_agentList);
     m_pages->addWidget(m_auditLog);
@@ -63,10 +68,14 @@ void AppShell::buildUi() {
 
     root->addWidget(m_topBar);
     root->addWidget(body, 1);
+    m_commandInputBar->setFixedHeight(190);
+    root->addWidget(m_commandInputBar);
     setCentralWidget(container);
 
     connect(m_sidebar, &QListWidget::currentRowChanged, this, &AppShell::onSidebarIndexChanged);
     connect(m_ticketBoard, &TicketBoard::ticketSelected, this, &AppShell::onTicketSelected);
+    connect(m_commandInputBar, &CommandInputBar::submitRequested, this, &AppShell::onCommandSubmitRequested);
+    connect(m_commandInputPage, &CommandInputPage::submitRequested, this, &AppShell::onCommandSubmitRequested);
     connect(m_settings, &SettingsPage::settingsApplied, this, &AppShell::onSettingsApplied);
 }
 
@@ -113,6 +122,12 @@ void AppShell::applyStyle() {
             border: 1px solid #5872aa;
             padding: 5px;
             min-width: 80px;
+        }
+        QTextEdit, QLineEdit {
+            background-color: #1f2d4a;
+            border: 1px solid #465f8f;
+            color: #efe3c5;
+            min-height: 20px;
         }
         QGroupBox {
             border: 1px solid #32486f;
@@ -171,6 +186,7 @@ void AppShell::refreshData() {
     updateErrorIndicators();
     m_systemStatus->setData(m_status, info, m_errorNotes);
     setDetailFromSelected();
+    applyCommandInputHints();
 }
 
 void AppShell::updateErrorIndicators() {
@@ -217,6 +233,76 @@ void AppShell::onTicketSelected(const QString& ticketId) {
 
 void AppShell::onSidebarIndexChanged(int row) {
     m_pages->setCurrentIndex(row);
+}
+
+void AppShell::onCommandSubmitRequested(const CreateTicketInput& input) {
+    if (!m_adapter) {
+        m_commandInputBar->setStatusMessage("adapter未初期化のため令札化不可");
+        m_commandInputPage->setStatusMessage("adapter未初期化のため令札化不可");
+        return;
+    }
+
+    const EngineAdapterInfo info = m_adapter->info();
+    const QString command = input.commandText.trimmed();
+    if (command.isEmpty()) {
+        m_commandInputBar->setStatusMessage("依頼文が空です。");
+        m_commandInputPage->setStatusMessage("依頼文が空です。");
+        return;
+    }
+    if (command.size() > kMaxCommandTextLength) {
+        m_commandInputBar->setStatusMessage(QString("依頼文が長すぎます（上限%1字）。").arg(kMaxCommandTextLength));
+        m_commandInputPage->setStatusMessage(QString("依頼文が長すぎます（上限%1字）。").arg(kMaxCommandTextLength));
+        return;
+    }
+
+    if (info.type != EngineAdapterType::Mock) {
+        if (info.type == EngineAdapterType::Real) {
+            const QString msg = "実接続: 令札作成は未対応のため保留（mockでの画面確認のみ）。";
+            m_commandInputBar->setStatusMessage(msg);
+            m_commandInputPage->setStatusMessage(msg);
+            return;
+        }
+        const QString msg = "noop: 令札作成は未接続です。";
+        m_commandInputBar->setStatusMessage(msg);
+        m_commandInputPage->setStatusMessage(msg);
+        return;
+    }
+
+    const auto created = m_adapter->createTicketFromCommand(input);
+    if (!created.has_value()) {
+        const QString msg = "令札化に失敗しました。";
+        m_commandInputBar->setStatusMessage(msg);
+        m_commandInputPage->setStatusMessage(msg);
+        return;
+    }
+
+    m_selectedTicketId = created->id;
+    const QString success = QString("令札%1をmock投入しました。").arg(created->id);
+    m_commandInputBar->setStatusMessage(success);
+    m_commandInputPage->setStatusMessage(success);
+    m_commandInputBar->clearInput();
+    m_commandInputPage->clearDraft();
+    refreshData();
+}
+
+void AppShell::applyCommandInputHints() {
+    if (!m_adapter) {
+        m_commandInputBar->setAdapterInfo({EngineAdapterType::Noop, false, "Unknown"});
+        m_commandInputPage->setAdapterInfo({EngineAdapterType::Noop, false, "Unknown"});
+        return;
+    }
+    const EngineAdapterInfo info = m_adapter->info();
+    m_commandInputBar->setAdapterInfo(info);
+    m_commandInputPage->setAdapterInfo(info);
+}
+
+void AppShell::clearCommandInputMessages() {
+    if (m_commandInputBar) {
+        m_commandInputBar->setStatusMessage("");
+    }
+    if (m_commandInputPage) {
+        m_commandInputPage->setStatusMessage("");
+    }
 }
 
 void AppShell::onSettingsApplied(const QVariantMap& settings) {

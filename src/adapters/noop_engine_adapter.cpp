@@ -50,4 +50,10 @@ QVector<DepartmentRecord> NoopEngineAdapter::getDepartmentRecords() const {
 void NoopEngineAdapter::tick() {
 }
 
+std::optional<Ticket> NoopEngineAdapter::createTicketFromCommand(const CreateTicketInput& input) {
+    Q_UNUSED(input)
+    return std::nullopt;
+}
+
 } // namespace nexspace
+

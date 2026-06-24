@@ -52,4 +52,10 @@ void RealEngineAdapter::tick() {
     // 未接続時は noop 相当の挙動。接続実装は別途追加される前提。
 }
 
+std::optional<Ticket> RealEngineAdapter::createTicketFromCommand(const CreateTicketInput& input) {
+    Q_UNUSED(input)
+    return std::nullopt;
+}
+
 } // namespace nexspace
+

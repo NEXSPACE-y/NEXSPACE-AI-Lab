@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <QString>
+#include <QStringList>
 #include <QVector>
 
 namespace nexspace {
@@ -40,11 +41,35 @@ enum class TicketPriority {
     critical
 };
 
+enum class DepartmentWorkStatus {
+    NOT_STARTED,
+    IN_PROGRESS,
+    PASSED,
+    WARN,
+    REJECTED,
+    RETURNED,
+    COMPLETED
+};
+
+enum class ViolationLevel {
+    none,
+    low,
+    medium,
+    high,
+    critical
+};
+
 enum class DepartmentEventType {
-    Routed,
-    Inspection,
-    Audit,
-    Record,
+    TicketReceived,
+    TicketStarted,
+    TicketCompleted,
+    TicketRejected,
+    TicketForwarded,
+    InspectionStarted,
+    InspectionCompleted,
+    AuditStarted,
+    AuditCompleted,
+    RecordSaved,
     Error
 };
 
@@ -53,22 +78,42 @@ struct Department {
     QString name;
     QString parentId;
     bool isParent = false;
+
     int activeTickets = 0;
     int completedTickets = 0;
     int auditWarnings = 0;
     int inspectionWarnings = 0;
     int recordCount = 0;
+
+    QString department_id;
+    QString department_name;
+    QString parent_department_id;
+    QStringList child_department_ids;
+    QString department_role;
+    QStringList allowed_input_ticket_types;
+    QStringList allowed_output_ticket_types;
+    QStringList forbidden_actions;
+    bool audit_required = false;
+    bool inspection_required = false;
+    bool record_required = false;
 };
 
 struct DepartmentEvent {
-    QString id;
-    QString ticketId;
+    QString event_id;
+    QString event_type;
+    QString ticket_id;
+    QString department_id;
     QString fromDepartmentId;
     QString toDepartmentId;
-    QString departmentId;
-    DepartmentEventType type = DepartmentEventType::Routed;
-    QString note;
+    DepartmentEventType type = DepartmentEventType::TicketForwarded;
+    QString status;
+    QString message_summary;
+    QString timestamp;
     QString createdAt;
+
+    QString id;
+    QString ticketId;
+    QString note;
 };
 
 struct DepartmentRecord {
@@ -89,10 +134,21 @@ struct Ticket {
     QString assignedAgentId;
     std::optional<AuditResult> auditResult;
     QString auditCategory;
+
     QString currentDepartmentId;
     QString previousDepartmentId;
     QString nextDepartmentId;
     QVector<QString> routeHistory;
+
+    QString current_department_id;
+    QString previous_department_id;
+    QString next_department_id;
+    QVector<QString> route_history;
+
+    QString audit_status;
+    QString inspection_status;
+    QString record_status;
+
     QString createdAt;
     QString updatedAt;
 };
@@ -120,6 +176,11 @@ struct AuditLog {
     QString recommendedAction;
     QString createdAt;
     bool retryable = false;
+
+    QString audit_flags;
+    QString violation_level;
+    QString required_action;
+    QString target_department_id;
 };
 
 struct HistoryEntry {
@@ -142,6 +203,15 @@ struct SystemStatus {
     int rejectedTickets = 0;
     int completedTickets = 0;
     int errorTickets = 0;
+};
+
+struct CompressedAuditTicket {
+    QString audit_result;
+    QStringList audit_flags;
+    QString violation_level;
+    QString required_action;
+    QString target_ticket_id;
+    QString target_department_id;
 };
 
 inline QString toJapaneseStatus(TicketStatus status) {
@@ -196,31 +266,55 @@ inline QString toJapaneseDepartment(const QString& departmentId) {
 
 inline QString toString(DepartmentEventType type) {
     switch (type) {
-        case DepartmentEventType::Routed:
-            return "routed";
-        case DepartmentEventType::Inspection:
-            return "inspection";
-        case DepartmentEventType::Audit:
-            return "audit";
-        case DepartmentEventType::Record:
-            return "record";
+        case DepartmentEventType::TicketReceived:
+            return "department.ticket.received";
+        case DepartmentEventType::TicketStarted:
+            return "department.ticket.started";
+        case DepartmentEventType::TicketCompleted:
+            return "department.ticket.completed";
+        case DepartmentEventType::TicketRejected:
+            return "department.ticket.rejected";
+        case DepartmentEventType::TicketForwarded:
+            return "department.ticket.forwarded";
+        case DepartmentEventType::InspectionStarted:
+            return "department.inspection.started";
+        case DepartmentEventType::InspectionCompleted:
+            return "department.inspection.completed";
+        case DepartmentEventType::AuditStarted:
+            return "department.audit.started";
+        case DepartmentEventType::AuditCompleted:
+            return "department.audit.completed";
+        case DepartmentEventType::RecordSaved:
+            return "department.record.saved";
         case DepartmentEventType::Error:
-            return "error";
+            return "department.error";
         default:
-            return "routed";
+            return "department.ticket.forwarded";
     }
 }
 
 inline QString toJapaneseDepartmentEvent(DepartmentEventType type) {
     switch (type) {
-        case DepartmentEventType::Routed:
+        case DepartmentEventType::TicketReceived:
+            return "受理";
+        case DepartmentEventType::TicketStarted:
+            return "開始";
+        case DepartmentEventType::TicketCompleted:
+            return "完了";
+        case DepartmentEventType::TicketRejected:
+            return "差戻し";
+        case DepartmentEventType::TicketForwarded:
             return "部署遷移";
-        case DepartmentEventType::Inspection:
-            return "検査";
-        case DepartmentEventType::Audit:
-            return "監査";
-        case DepartmentEventType::Record:
-            return "記録";
+        case DepartmentEventType::InspectionStarted:
+            return "検査開始";
+        case DepartmentEventType::InspectionCompleted:
+            return "検査完了";
+        case DepartmentEventType::AuditStarted:
+            return "監査開始";
+        case DepartmentEventType::AuditCompleted:
+            return "監査完了";
+        case DepartmentEventType::RecordSaved:
+            return "記録保存";
         case DepartmentEventType::Error:
             return "異常";
         default:
@@ -301,6 +395,80 @@ inline QString parseRole(AgentRole role) {
         case AgentRole::Observer: return "Observer";
         case AgentRole::System: return "System";
         default: return "Worker";
+    }
+}
+
+inline QString toString(DepartmentWorkStatus status) {
+    switch (status) {
+        case DepartmentWorkStatus::NOT_STARTED: return "not_started";
+        case DepartmentWorkStatus::IN_PROGRESS: return "in_progress";
+        case DepartmentWorkStatus::PASSED: return "passed";
+        case DepartmentWorkStatus::WARN: return "warn";
+        case DepartmentWorkStatus::REJECTED: return "rejected";
+        case DepartmentWorkStatus::RETURNED: return "returned";
+        case DepartmentWorkStatus::COMPLETED: return "completed";
+        default: return "not_started";
+    }
+}
+
+inline DepartmentWorkStatus parseWorkStatus(const QString& value) {
+    if (value == "in_progress") return DepartmentWorkStatus::IN_PROGRESS;
+    if (value == "passed") return DepartmentWorkStatus::PASSED;
+    if (value == "warn") return DepartmentWorkStatus::WARN;
+    if (value == "rejected") return DepartmentWorkStatus::REJECTED;
+    if (value == "returned") return DepartmentWorkStatus::RETURNED;
+    if (value == "completed") return DepartmentWorkStatus::COMPLETED;
+    return DepartmentWorkStatus::NOT_STARTED;
+}
+
+inline QString toString(ViolationLevel level) {
+    switch (level) {
+        case ViolationLevel::none:
+            return "none";
+        case ViolationLevel::low:
+            return "low";
+        case ViolationLevel::medium:
+            return "medium";
+        case ViolationLevel::high:
+            return "high";
+        case ViolationLevel::critical:
+            return "critical";
+        default:
+            return "none";
+    }
+}
+
+inline ViolationLevel parseViolationLevel(const QString& value) {
+    if (value == "low") return ViolationLevel::low;
+    if (value == "medium") return ViolationLevel::medium;
+    if (value == "high") return ViolationLevel::high;
+    if (value == "critical") return ViolationLevel::critical;
+    return ViolationLevel::none;
+}
+
+inline void synchronizeDepartmentAliases(Ticket& ticket) {
+    ticket.currentDepartmentId = ticket.current_department_id.isEmpty() ? ticket.currentDepartmentId : ticket.current_department_id;
+    ticket.previousDepartmentId = ticket.previous_department_id.isEmpty() ? ticket.previousDepartmentId : ticket.previous_department_id;
+    ticket.nextDepartmentId = ticket.next_department_id.isEmpty() ? ticket.nextDepartmentId : ticket.next_department_id;
+    ticket.routeHistory = ticket.route_history.isEmpty() ? ticket.routeHistory : ticket.route_history;
+
+    if (!ticket.currentDepartmentId.isEmpty()) ticket.current_department_id = ticket.currentDepartmentId;
+    if (!ticket.previousDepartmentId.isEmpty()) ticket.previous_department_id = ticket.previousDepartmentId;
+    if (!ticket.nextDepartmentId.isEmpty()) ticket.next_department_id = ticket.nextDepartmentId;
+    if (!ticket.routeHistory.isEmpty()) ticket.route_history = ticket.routeHistory;
+
+    if (ticket.audit_status.isEmpty()) {
+        if (ticket.auditResult.has_value()) {
+            ticket.audit_status = (ticket.auditResult.value() == AuditResult::PASS) ? toString(DepartmentWorkStatus::PASSED) : toString(DepartmentWorkStatus::WARN);
+        } else {
+            ticket.audit_status = toString(DepartmentWorkStatus::NOT_STARTED);
+        }
+    }
+    if (ticket.inspection_status.isEmpty()) {
+        ticket.inspection_status = toString(DepartmentWorkStatus::NOT_STARTED);
+    }
+    if (ticket.record_status.isEmpty()) {
+        ticket.record_status = toString(DepartmentWorkStatus::NOT_STARTED);
     }
 }
 

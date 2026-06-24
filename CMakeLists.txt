@@ -21,6 +21,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${QT_DEPLOY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${QT_DEPLOY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QT_DEPLOY_DIR}")
 
+set(DEPLOYMENT_CONFIG_DIR "${CMAKE_SOURCE_DIR}/../部署構成")
+
 set(SRC_FILES
     src/main.cpp
     src/domain.h
@@ -31,6 +33,10 @@ set(SRC_FILES
     src/adapters/real_engine_adapter.cpp
     src/adapters/noop_engine_adapter.h
     src/adapters/noop_engine_adapter.cpp
+    ${DEPLOYMENT_CONFIG_DIR}/department_registry.h
+    ${DEPLOYMENT_CONFIG_DIR}/department_registry.cpp
+    ${DEPLOYMENT_CONFIG_DIR}/mock_engine_department_adapter.h
+    ${DEPLOYMENT_CONFIG_DIR}/mock_engine_department_adapter.cpp
     src/sound/soundCueTypes.h
     src/sound/soundCueAdapter.h
     src/sound/noopSoundCueAdapter.h
@@ -45,6 +51,12 @@ set(SRC_FILES
     src/widgets/ticket_board.cpp
     src/widgets/ticket_detail_panel.h
     src/widgets/ticket_detail_panel.cpp
+    src/widgets/command_input_bar.h
+    src/widgets/command_input_bar.cpp
+    src/widgets/command_draft_panel.h
+    src/widgets/command_draft_panel.cpp
+    src/widgets/command_input_page.h
+    src/widgets/command_input_page.cpp
     src/widgets/agent_list_page.h
     src/widgets/agent_list_page.cpp
     src/widgets/department_page.cpp
@@ -62,6 +74,22 @@ set(SRC_FILES
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${QT_WIDGETS_LIB})
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+    "${DEPLOYMENT_CONFIG_DIR}"
+    "${CMAKE_SOURCE_DIR}/src")
+
+add_executable(department_goal_tests
+    tests/department_goal_tests.cpp
+    src/adapters/mock_engine_adapter.cpp
+    ${DEPLOYMENT_CONFIG_DIR}/mock_engine_department_adapter.cpp
+    ${DEPLOYMENT_CONFIG_DIR}/department_registry.cpp
+)
+target_link_libraries(department_goal_tests PRIVATE ${QT_WIDGETS_LIB})
+target_include_directories(department_goal_tests
+    PRIVATE
+    "${DEPLOYMENT_CONFIG_DIR}"
+    "${CMAKE_SOURCE_DIR}/src")
 
 if(WIN32)
   set(WINDEPLOY_SEARCH_HINTS)
@@ -89,3 +117,4 @@ if(WIN32)
     message(WARNING "windeployqt not found. Build will produce exe only; dist/nexspace_ai_lab_ui will not include Qt DLLs automatically.")
   endif()
 endif()
+

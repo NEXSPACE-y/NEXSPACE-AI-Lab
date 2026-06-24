@@ -18,6 +18,7 @@ public:
     QVector<Department> getDepartments() const override;
     QVector<DepartmentEvent> getDepartmentEvents() const override;
     QVector<DepartmentRecord> getDepartmentRecords() const override;
+    std::optional<Ticket> createTicketFromCommand(const CreateTicketInput& input) override;
     void tick() override;
 
 private:

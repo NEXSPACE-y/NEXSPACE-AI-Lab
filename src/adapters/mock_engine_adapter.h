@@ -1,16 +1,17 @@
 #pragma once
 
 #include "engine_adapter.h"
-#include <QDateTime>
-#include <QHash>
-#include <QStringList>
-#include <QVector>
+#include <memory>
 
 namespace nexspace {
+
+class MockDepartmentEngineAdapter;
+
 
 class MockEngineAdapter : public EngineAdapter {
 public:
     MockEngineAdapter();
+    ~MockEngineAdapter() override;
 
     EngineAdapterInfo info() const override;
     SystemStatus getSystemStatus() const override;
@@ -22,37 +23,12 @@ public:
     QVector<Department> getDepartments() const override;
     QVector<DepartmentEvent> getDepartmentEvents() const override;
     QVector<DepartmentRecord> getDepartmentRecords() const override;
+    QVector<CompressedAuditTicket> getCompressedAuditTickets() const;
     void tick() override;
+    std::optional<Ticket> createTicketFromCommand(const CreateTicketInput& input) override;
 
 private:
-    void seed();
-    void advanceTicketFlow(Ticket& ticket, int step);
-    void pushAuditLog(const QString& ticketId, const QString& agentId, AuditResult result, const QString& category,
-                      const QString& reason, const QString& action, bool retryable, const QString& departmentId = QString());
-    void pushHistory(const Ticket& ticket, const QString& processResult, bool hasError);
-    QStringList routeForTicket(const Ticket& ticket) const;
-    QStringList buildInitialRoute(const Ticket& ticket) const;
-    void appendDepartmentHistory(Ticket& ticket, const QString& from, const QString& to);
-    void moveToDepartment(Ticket& ticket, const QString& nextDepartmentId, bool checkRouteViolation = true);
-    void updateDepartmentStatus();
-    void emitDepartmentEvent(const QString& ticketId, const QString& from, const QString& to, DepartmentEventType type, const QString& note);
-    void registerDepartmentRegistry();
-    void syncTicketDepartmentIfNeeded(Ticket& ticket, int phase);
-    void recalcSystemStatus();
-
-    EngineAdapterInfo m_info;
-    QVector<Ticket> m_tickets;
-    QVector<Agent> m_agents;
-    QVector<AuditLog> m_auditLogs;
-    QVector<HistoryEntry> m_history;
-    QVector<Department> m_departments;
-    QVector<DepartmentEvent> m_departmentEvents;
-    QVector<DepartmentRecord> m_departmentRecords;
-    QHash<QString, int> m_phaseByTicket;
-    SystemStatus m_systemStatus;
-    int m_departmentEventSeq = 0;
-    int m_departmentRecordSeq = 0;
-    int m_tick = 0;
+    std::unique_ptr<MockDepartmentEngineAdapter> m_impl;
 };
 
 } // namespace nexspace
