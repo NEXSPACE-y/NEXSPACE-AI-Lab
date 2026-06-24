@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
+#include <QStackedWidget>
 #include <QVBoxLayout>
 
 namespace nexspace {
@@ -27,6 +28,8 @@ signals:
 
 private:
     QVBoxLayout* m_rootLayout = nullptr;
+    QComboBox* m_sectionSelector = nullptr;
+    QStackedWidget* m_sectionStack = nullptr;
     void setupEngineGroup();
     void setupAuditorGroup();
     void setupUiGroup();

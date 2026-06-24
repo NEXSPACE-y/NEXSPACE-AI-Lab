@@ -11,12 +11,43 @@
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QCheckBox>
+#include <QStackedWidget>
 
 namespace nexspace {
+
+namespace {
+void configureFormLayout(QFormLayout* layout) {
+    layout->setContentsMargins(12, 18, 12, 12);
+    layout->setSpacing(8);
+    layout->setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
+    layout->setLabelAlignment(Qt::AlignLeft);
+}
+
+void setControlWidth(QWidget* widget, int width = 180) {
+    widget->setMinimumWidth(width);
+    widget->setMaximumWidth(width);
+}
+}
 
 SettingsPage::SettingsPage(QWidget* parent)
     : QWidget(parent) {
     m_rootLayout = new QVBoxLayout(this);
+    m_rootLayout->setContentsMargins(12, 12, 12, 12);
+    m_rootLayout->setSpacing(10);
+
+    auto* selectorRow = new QHBoxLayout();
+    auto* selectorLabel = new QLabel("設定項目");
+    m_sectionSelector = new QComboBox();
+    m_sectionSelector->addItems({"軍令設定", "監察設定", "UI設定", "保存先設定", "軍議演出SE"});
+    m_sectionSelector->setFixedWidth(220);
+    selectorRow->addWidget(selectorLabel);
+    selectorRow->addWidget(m_sectionSelector);
+    selectorRow->addStretch();
+
+    m_sectionStack = new QStackedWidget();
+    m_rootLayout->addLayout(selectorRow);
+    m_rootLayout->addWidget(m_sectionStack, 1);
+
     setupEngineGroup();
     setupAuditorGroup();
     setupUiGroup();
@@ -24,29 +55,42 @@ SettingsPage::SettingsPage(QWidget* parent)
     setupSoundGroup();
 
     auto* apply = new QPushButton("設定を反映");
+    apply->setFixedWidth(160);
     auto* note = new QLabel("SE音源は導線のみ。音源未接続で再生なし。");
-    m_rootLayout->addWidget(apply);
-    m_rootLayout->addWidget(note);
-    m_rootLayout->addStretch();
+    note->setWordWrap(true);
+
+    auto* footer = new QWidget();
+    auto* footerLayout = new QHBoxLayout(footer);
+    footerLayout->setContentsMargins(0, 0, 0, 0);
+    footerLayout->setSpacing(10);
+    footerLayout->addWidget(apply);
+    footerLayout->addWidget(note, 1);
+    m_rootLayout->addWidget(footer);
 
     connect(apply, &QPushButton::clicked, this, &SettingsPage::emitCurrentSettings);
+    connect(m_sectionSelector, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            m_sectionStack, &QStackedWidget::setCurrentIndex);
 }
 
 void SettingsPage::setupEngineGroup() {
     auto* group = new QGroupBox("軍令設定");
     auto* layout = new QFormLayout(group);
+    configureFormLayout(layout);
 
     m_engineEnabled = new QCheckBox("エンジン ON");
     m_autoProcess = new QCheckBox("自動処理 ON");
     m_auditStrength = new QSpinBox();
     m_auditStrength->setRange(1, 5);
     m_auditStrength->setValue(3);
+    setControlWidth(m_auditStrength, 120);
     m_maxConcurrent = new QSpinBox();
     m_maxConcurrent->setRange(1, 16);
     m_maxConcurrent->setValue(4);
+    setControlWidth(m_maxConcurrent, 120);
     m_timeoutSec = new QSpinBox();
     m_timeoutSec->setRange(1, 300);
     m_timeoutSec->setValue(30);
+    setControlWidth(m_timeoutSec, 120);
 
     layout->addRow("エンジン稼働", m_engineEnabled);
     layout->addRow("自動処理", m_autoProcess);
@@ -54,7 +98,7 @@ void SettingsPage::setupEngineGroup() {
     layout->addRow("最大同時処理数", m_maxConcurrent);
     layout->addRow("タイムアウト秒数", m_timeoutSec);
 
-    m_rootLayout->addWidget(group);
+    m_sectionStack->addWidget(group);
     m_engineEnabled->setChecked(true);
     m_autoProcess->setChecked(true);
 }
@@ -62,6 +106,7 @@ void SettingsPage::setupEngineGroup() {
 void SettingsPage::setupAuditorGroup() {
     auto* group = new QGroupBox("監察設定");
     auto* layout = new QFormLayout(group);
+    configureFormLayout(layout);
 
     m_auditorEnabled = new QCheckBox("監察AI有効");
     m_warnStop = new QCheckBox("WARNで停止");
@@ -69,13 +114,14 @@ void SettingsPage::setupAuditorGroup() {
     m_auditLogRetention = new QSpinBox();
     m_auditLogRetention->setRange(1, 365);
     m_auditLogRetention->setValue(30);
+    setControlWidth(m_auditLogRetention, 120);
 
     layout->addRow("監察AI", m_auditorEnabled);
     layout->addRow("WARN停止", m_warnStop);
     layout->addRow("REJECT再処理", m_autoReprocessReject);
     layout->addRow("監査ログ保存日数", m_auditLogRetention);
 
-    m_rootLayout->addWidget(group);
+    m_sectionStack->addWidget(group);
     m_auditorEnabled->setChecked(true);
     m_warnStop->setChecked(false);
     m_autoReprocessReject->setChecked(true);
@@ -84,19 +130,21 @@ void SettingsPage::setupAuditorGroup() {
 void SettingsPage::setupUiGroup() {
     auto* group = new QGroupBox("UI設定");
     auto* layout = new QFormLayout(group);
+    configureFormLayout(layout);
 
     m_uiDark = new QCheckBox("ライト/ダーク(現在はダーク)");
     m_compact = new QCheckBox("コンパクト表示");
     m_refreshSec = new QSpinBox();
     m_refreshSec->setRange(1, 60);
     m_refreshSec->setValue(3);
+    setControlWidth(m_refreshSec, 120);
     m_notify = new QCheckBox("通知 ON");
 
     layout->addRow("テーマ", m_uiDark);
     layout->addRow("コンパクト", m_compact);
     layout->addRow("自動更新間隔(秒)", m_refreshSec);
     layout->addRow("通知", m_notify);
-    m_rootLayout->addWidget(group);
+    m_sectionStack->addWidget(group);
     m_uiDark->setChecked(true);
     m_compact->setChecked(false);
     m_notify->setChecked(true);
@@ -105,12 +153,17 @@ void SettingsPage::setupUiGroup() {
 void SettingsPage::setupStorageGroup() {
     auto* group = new QGroupBox("保存先設定");
     auto* layout = new QFormLayout(group);
+    configureFormLayout(layout);
     m_ticketStorage = new QLineEdit("mock://tickets");
     m_logStorage = new QLineEdit("mock://audit_log");
+    setControlWidth(m_ticketStorage, 420);
+    setControlWidth(m_logStorage, 420);
     m_historyRetention = new QSpinBox();
     m_historyRetention->setRange(1, 365);
     m_historyRetention->setValue(90);
+    setControlWidth(m_historyRetention, 120);
     m_exportButton = new QPushButton("エクスポート");
+    setControlWidth(m_exportButton, 160);
 
     layout->addRow("札保存先", m_ticketStorage);
     layout->addRow("ログ保存先", m_logStorage);
@@ -119,12 +172,13 @@ void SettingsPage::setupStorageGroup() {
     connect(m_exportButton, &QPushButton::clicked, this, []() {
         QMessageBox::information(nullptr, "エクスポート", "監査履歴のエクスポートは未接続モードでは未実装です。");
     });
-    m_rootLayout->addWidget(group);
+    m_sectionStack->addWidget(group);
 }
 
 void SettingsPage::setupSoundGroup() {
     auto* group = new QGroupBox("軍議演出SE");
     auto* layout = new QFormLayout(group);
+    configureFormLayout(layout);
 
     m_soundEnabled = new QCheckBox("有効/無効");
     m_soundMode = new QComboBox();
@@ -132,18 +186,28 @@ void SettingsPage::setupSoundGroup() {
     m_soundMode->addItem("Minimal", "minimal");
     m_soundMode->addItem("Normal", "normal");
     m_soundMode->addItem("Gunji", "gunji");
+    setControlWidth(m_soundMode, 160);
     m_masterVol = new QDoubleSpinBox();
     m_eventVol = new QDoubleSpinBox();
     m_errorVol = new QDoubleSpinBox();
     m_masterVol->setRange(0.0, 1.0);
     m_eventVol->setRange(0.0, 1.0);
     m_errorVol->setRange(0.0, 1.0);
+    m_masterVol->setSingleStep(0.05);
+    m_eventVol->setSingleStep(0.05);
+    m_errorVol->setSingleStep(0.05);
+    setControlWidth(m_masterVol, 120);
+    setControlWidth(m_eventVol, 120);
+    setControlWidth(m_errorVol, 120);
     m_cooldown = new QSpinBox();
     m_cooldown->setRange(0, 30000);
     m_cooldown->setValue(5000);
+    setControlWidth(m_cooldown, 140);
     m_nightMute = new QCheckBox("夜間ミュート");
     m_nightStart = new QLineEdit("22:00");
     m_nightEnd = new QLineEdit("08:00");
+    setControlWidth(m_nightStart, 100);
+    setControlWidth(m_nightEnd, 100);
 
     m_soundEnabled->setChecked(false);
     m_soundMode->setCurrentIndex(0);
@@ -163,8 +227,9 @@ void SettingsPage::setupSoundGroup() {
     layout->addRow("夜間ミュート終了", m_nightEnd);
 
     auto* label = new QLabel("現在は導線のみ。音源再生は未接続。");
+    label->setWordWrap(true);
     layout->addWidget(label);
-    m_rootLayout->addWidget(group);
+    m_sectionStack->addWidget(group);
 }
 
 void SettingsPage::emitCurrentSettings() {
