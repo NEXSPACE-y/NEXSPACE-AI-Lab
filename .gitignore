@@ -1,0 +1,41 @@
+# Build output
+build/
+dist/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Compiled binaries and objects
+*.exe
+*.dll
+*.obj
+*.o
+*.lib
+*.exp
+*.ilk
+*.pdb
+*.idb
+*.tlog
+
+# Generated project files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.slnx
+*.user
+*.suo
+
+# Logs and caches
+*.log
+*.tmp
+*.cache
+
+# Local data
+書類倉庫/
+
+# IDE and OS files
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db
