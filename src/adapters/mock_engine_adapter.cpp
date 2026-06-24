@@ -18,7 +18,13 @@ QStringList branchDepartment(const Ticket& ticket) {
 }
 
 QStringList baseRouteFor(const QString& department) {
-    return {"02_秘書室", "01_社長室", "04_戦略室", department, "08_検査部", "03_監査室", "10_庶務課"};
+    if (department == "07_技術部") {
+        return {"02_秘書室", "01_社長室", "04_戦略室", "05_制作室", "07_技術部", "08_検査部", "03_監査室", "10_庶務課"};
+    }
+    if (department == "06_営業部") {
+        return {"02_秘書室", "01_社長室", "04_戦略室", "06_営業部", "08_検査部", "03_監査室", "10_庶務課"};
+    }
+    return {"02_秘書室", "01_社長室", "04_戦略室", "05_制作室", "08_検査部", "03_監査室", "10_庶務課"};
 }
 } // namespace
 
@@ -36,16 +42,16 @@ EngineAdapterInfo MockEngineAdapter::info() const {
 
 void MockEngineAdapter::registerDepartmentRegistry() {
     m_departments = {
-        {"01_社長室", "01_社長室", QString(), true, 0, 0, 0, 0, 0},
-        {"02_秘書室", "02_秘書室", "01_社長室", false, 0, 0, 0, 0, 0},
-        {"03_監査室", "03_監査室", QString(), true, 0, 0, 0, 0, 0},
-        {"08_検査部", "08_検査部", "03_監査室", false, 0, 0, 0, 0, 0},
-        {"04_戦略室", "04_戦略室", QString(), true, 0, 0, 0, 0, 0},
-        {"05_制作室", "05_制作室", "04_戦略室", false, 0, 0, 0, 0, 0},
-        {"06_営業部", "06_営業部", "04_戦略室", false, 0, 0, 0, 0, 0},
-        {"07_技術部", "07_技術部", "04_戦略室", false, 0, 0, 0, 0, 0},
-        {"09_総務部", "09_総務部", QString(), true, 0, 0, 0, 0, 0},
-        {"10_庶務課", "10_庶務課", "09_総務部", false, 0, 0, 0, 0, 0}
+        {"01_社長室", "社長室", QString(), true, 0, 0, 0, 0, 0},
+        {"02_秘書室", "秘書室", "01_社長室", false, 0, 0, 0, 0, 0},
+        {"03_監査室", "監査室", QString(), true, 0, 0, 0, 0, 0},
+        {"08_検査部", "検査部", "03_監査室", false, 0, 0, 0, 0, 0},
+        {"04_戦略室", "戦略室", QString(), true, 0, 0, 0, 0, 0},
+        {"05_制作室", "制作室", "04_戦略室", true, 0, 0, 0, 0, 0},
+        {"06_営業部", "営業部", "04_戦略室", false, 0, 0, 0, 0, 0},
+        {"07_技術部", "技術部", "05_制作室", false, 0, 0, 0, 0, 0},
+        {"09_総務部", "総務部", QString(), true, 0, 0, 0, 0, 0},
+        {"10_庶務課", "庶務課", "09_総務部", false, 0, 0, 0, 0, 0}
     };
 }
 
@@ -59,15 +65,13 @@ QStringList MockEngineAdapter::buildInitialRoute(const Ticket& ticket) const {
 }
 
 void MockEngineAdapter::appendDepartmentHistory(Ticket& ticket, const QString& from, const QString& to) {
+    Q_UNUSED(from)
     if (!to.isEmpty()) {
-        if (!ticket.routeHistory.contains(to)) {
-            ticket.routeHistory.append(to);
-        }
+        ticket.routeHistory.append(to);
         if (ticket.routeHistory.size() > 16) {
             ticket.routeHistory.removeFirst();
         }
     }
-    Q_UNUSED(from)
 }
 
 void MockEngineAdapter::emitDepartmentEvent(const QString& ticketId, const QString& from, const QString& to,
@@ -138,6 +142,7 @@ void MockEngineAdapter::syncTicketDepartmentIfNeeded(Ticket& ticket, int phase) 
     ticket.currentDepartmentId = route[seedIndex];
     ticket.previousDepartmentId.clear();
     ticket.nextDepartmentId = (seedIndex + 1 < route.size()) ? route[seedIndex + 1] : QString();
+    ticket.routeHistory.clear();
     ticket.routeHistory = {ticket.currentDepartmentId};
 }
 
@@ -299,11 +304,11 @@ void MockEngineAdapter::pushAuditLog(const QString& ticketId, const QString& age
     m_auditLogs.prepend({QString("L-%1").arg(m_auditLogs.size() + 1, 4, 10, QLatin1Char('0')),
                          ticketId,
                          agentId,
+                         departmentId,
                          result,
                          category,
                          reason,
                          action,
-                         departmentId,
                          utcNow(),
                          retryable});
     if (m_auditLogs.size() > 300) {
@@ -404,6 +409,7 @@ void MockEngineAdapter::advanceTicketFlow(Ticket& ticket, int step) {
     int phase = m_phaseByTicket.value(ticket.id, 0);
     phase = (phase + 1 + (step % 2)) % 7;
     m_phaseByTicket[ticket.id] = phase;
+    const QStringList route = routeForTicket(ticket);
 
     switch (phase) {
         case 0:
@@ -413,52 +419,53 @@ void MockEngineAdapter::advanceTicketFlow(Ticket& ticket, int step) {
                 ticket.auditResult.reset();
                 ticket.auditCategory.clear();
             }
-            moveToDepartment(ticket, "02_秘書室", true);
+            moveToDepartment(ticket, route.value(0), true);
             break;
         case 1:
             ticket.status = TicketStatus::ASSIGNED;
             ticket.assignedAgentId = "A-201";
-            moveToDepartment(ticket, "01_社長室", true);
+            moveToDepartment(ticket, route.value(1), true);
             ticket.auditCategory = "tool_mismatch";
             break;
         case 2:
             ticket.status = TicketStatus::PROCESSING;
-            moveToDepartment(ticket, "04_戦略室", true);
+            moveToDepartment(ticket, route.value(2), true);
             break;
         case 3: {
-            const QStringList route = routeForTicket(ticket);
-            QString executionDept = route.value(3);
             ticket.status = TicketStatus::PROCESSING;
-            moveToDepartment(ticket, executionDept, true);
+            moveToDepartment(ticket, route.value(3), true);
             break;
         }
         case 4:
             ticket.status = TicketStatus::AUDIT_PENDING;
-            moveToDepartment(ticket, "08_検査部", true);
+            moveToDepartment(ticket, route.value(4), true);
             break;
-        case 5:
+        case 5: {
+            const QString auditDestination = route.value(route.size() - 2);
             if (step % 3 == 0) {
-                emitDepartmentEvent(ticket.id, ticket.currentDepartmentId, "04_戦略室", DepartmentEventType::Audit,
+                const QString fallback = route.value(2);
+                emitDepartmentEvent(ticket.id, ticket.currentDepartmentId, fallback, DepartmentEventType::Audit,
                                    "監査で差戻し、戦略室へ戻る");
                 ticket.status = TicketStatus::PROCESSING;
                 ticket.auditResult = std::nullopt;
                 ticket.auditCategory.clear();
-                moveToDepartment(ticket, "04_戦略室", false);
+                moveToDepartment(ticket, fallback, false);
                 emitDepartmentEvent(ticket.id, ticket.previousDepartmentId, ticket.currentDepartmentId, DepartmentEventType::Error,
                                    "要件不一致による再処理");
                 pushAuditLog(ticket.id, ticket.assignedAgentId, AuditResult::REJECT, "scope_deviation", "要件逸脱: 再検査", "再振り分け", true, ticket.currentDepartmentId);
             } else {
-                moveToDepartment(ticket, "03_監査室", true);
+                moveToDepartment(ticket, auditDestination, true);
                 ticket.status = TicketStatus::AUDIT_PASSED;
                 ticket.auditResult = AuditResult::PASS;
-                emitDepartmentEvent(ticket.id, ticket.currentDepartmentId, "03_監査室", DepartmentEventType::Audit,
+                emitDepartmentEvent(ticket.id, ticket.currentDepartmentId, auditDestination, DepartmentEventType::Audit,
                                    "監査室で監査完了");
                 pushAuditLog(ticket.id, ticket.assignedAgentId, AuditResult::PASS, "requirement_missing", "監査通過", "処理継続", true, "03_監査室");
                 pushHistory(ticket, "監査済み: 帰陣準備", false);
             }
             break;
+        }
         case 6:
-            moveToDepartment(ticket, "10_庶務課", true);
+            moveToDepartment(ticket, route.value(route.size() - 1), true);
             ticket.status = TicketStatus::DONE;
             ticket.auditResult = AuditResult::PASS;
             pushHistory(ticket, "監査済み: 帰陣完了", false);

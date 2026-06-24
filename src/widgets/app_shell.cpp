@@ -32,18 +32,20 @@ void AppShell::buildUi() {
     m_detailPanel = new TicketDetailPanel();
     m_pages = new QStackedWidget();
     m_dashboard = new DashboardPage();
+    m_departmentPage = new DepartmentPage();
     m_agentList = new AgentListPage();
     m_auditLog = new AuditLogTable();
     m_history = new HistoryTable();
     m_settings = new SettingsPage();
     m_systemStatus = new SystemStatusPanel();
 
-    m_sidebar->addItems({"軍議盤", "札場", "配下一覧", "監察記録", "軍務履歴", "軍令設定", "本陣状態"});
+    m_sidebar->addItems({"軍議盤", "札場", "部署一覧", "配下一覧", "監察記録", "軍務履歴", "軍令設定", "本陣状態"});
     m_sidebar->setFixedWidth(170);
     m_sidebar->setCurrentRow(0);
 
     m_pages->addWidget(m_dashboard);
     m_pages->addWidget(m_ticketBoard);
+    m_pages->addWidget(m_departmentPage);
     m_pages->addWidget(m_agentList);
     m_pages->addWidget(m_auditLog);
     m_pages->addWidget(m_history);
@@ -135,16 +137,22 @@ void AppShell::refreshData() {
     if (info.connected) {
         m_status = m_adapter->getSystemStatus();
         m_tickets = m_adapter->getTickets();
+        m_departments = m_adapter->getDepartments();
         m_agents = m_adapter->getAgents();
         m_auditLogs = m_adapter->getAuditLogs();
         m_historyEntries = m_adapter->getHistory();
+        m_departmentEvents = m_adapter->getDepartmentEvents();
+        m_departmentRecords = m_adapter->getDepartmentRecords();
         m_status.status = "running";
     } else {
         m_status = {"error", 0, 0, 0, 0, 0, 0, 0};
         m_tickets.clear();
+        m_departments.clear();
         m_agents.clear();
         m_auditLogs.clear();
         m_historyEntries.clear();
+        m_departmentEvents.clear();
+        m_departmentRecords.clear();
     }
 
     m_soundService.onDataRefresh(m_previousTickets, m_tickets, m_previousLogs, m_auditLogs);
@@ -152,6 +160,10 @@ void AppShell::refreshData() {
     m_topBar->setSystemStatus(m_status);
     m_dashboard->updateData(m_status, m_agents, m_auditLogs);
     m_ticketBoard->setTickets(m_tickets);
+    m_departmentPage->setDepartments(m_departments);
+    m_departmentPage->setDepartmentEvents(m_departmentEvents);
+    m_departmentPage->setDepartmentRecords(m_departmentRecords);
+    m_departmentPage->setTickets(m_tickets);
     m_agentList->setAgents(m_agents);
     m_auditLog->setAuditLogs(m_auditLogs);
     m_history->setHistory(m_historyEntries);

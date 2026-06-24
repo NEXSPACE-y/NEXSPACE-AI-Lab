@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QVBoxLayout>
+#include <QStringList>
 
 namespace nexspace {
 
@@ -76,7 +77,14 @@ QString TicketBoard::ticketDisplayText(const Ticket& ticket) const {
         ? toJapaneseAuditResult(ticket.auditResult.value())
         : "未判定";
     QString agent = ticket.assignedAgentId.isEmpty() ? "未割当" : ticket.assignedAgentId;
-    return QString("[%1] %2\n種別:%3 優先:%4 状態:%5 担当:%6\n監察:%7 作成:%8 更新:%9")
+    QString department = ticket.currentDepartmentId.isEmpty() ? "未割当" : toJapaneseDepartment(ticket.currentDepartmentId);
+    QString next = ticket.nextDepartmentId.isEmpty() ? "未設定" : toJapaneseDepartment(ticket.nextDepartmentId);
+    QStringList history;
+    for (const auto& node : ticket.routeHistory) {
+        history.append(node);
+    }
+    const QString route = history.isEmpty() ? "なし" : history.join(" → ");
+    return QString("[%1] %2\n種別:%3 優先:%4 状態:%5 担当:%6 監察:%7\n現在部署:%8 次工程:%9\n処理履歴:%10\n作成:%11 更新:%12")
         .arg(ticket.id,
              ticket.title,
              ticket.type,
@@ -84,6 +92,9 @@ QString TicketBoard::ticketDisplayText(const Ticket& ticket) const {
              toJapaneseStatus(ticket.status),
              agent,
              auditLabel,
+             department,
+             next,
+             route,
              ticket.createdAt,
              ticket.updatedAt);
 }

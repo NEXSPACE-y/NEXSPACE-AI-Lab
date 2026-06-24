@@ -2,6 +2,7 @@
 #include "../domain.h"
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QStringList>
 
 namespace nexspace {
 
@@ -30,6 +31,9 @@ TicketDetailPanel::TicketDetailPanel(QWidget* parent)
     m_priority = new QLabel("優先度: -");
     m_status = new QLabel("状態: -");
     m_agent = new QLabel("担当AI: -");
+    m_currentDepartment = new QLabel("現在担当部署: -");
+    m_nextDepartment = new QLabel("次工程部署: -");
+    m_routeHistory = new QLabel("部署履歴: -");
     m_auditResult = new QLabel("監察結果: -");
     m_auditCategory = new QLabel("指摘カテゴリ: -");
     m_recommend = new QLabel("推奨対応: -");
@@ -46,6 +50,9 @@ TicketDetailPanel::TicketDetailPanel(QWidget* parent)
     layout->addWidget(m_priority);
     layout->addWidget(m_status);
     layout->addWidget(m_agent);
+    layout->addWidget(m_currentDepartment);
+    layout->addWidget(m_nextDepartment);
+    layout->addWidget(m_routeHistory);
     layout->addWidget(m_auditResult);
     layout->addWidget(m_auditCategory);
     layout->addWidget(m_recommend);
@@ -69,6 +76,13 @@ void TicketDetailPanel::setTicket(const std::optional<Ticket>& ticketOpt, const 
     m_priority->setText(QString("優先度: %1").arg(toLabel(ticket.priority)));
     m_status->setText(QString("状態: %1").arg(toJapaneseStatus(ticket.status)));
     m_agent->setText(QString("担当AI: %1").arg(ticket.assignedAgentId.isEmpty() ? "未割当" : ticket.assignedAgentId));
+    m_currentDepartment->setText(QString("現在担当部署: %1").arg(toJapaneseDepartment(ticket.currentDepartmentId)));
+    m_nextDepartment->setText(QString("次工程部署: %1").arg(toJapaneseDepartment(ticket.nextDepartmentId)));
+    QStringList route;
+    for (const auto& node : ticket.routeHistory) {
+        route.append(node);
+    }
+    m_routeHistory->setText(QString("部署履歴: %1").arg(route.isEmpty() ? "未設定" : route.join(" → ")));
 
     if (ticket.auditResult.has_value()) {
         m_auditResult->setText(QString("監察結果: %1").arg(toJapaneseAuditResult(ticket.auditResult.value())));
@@ -110,6 +124,9 @@ void TicketDetailPanel::clear() {
     m_recommend->setText("推奨対応: -");
     m_created->setText("作成: -");
     m_updated->setText("更新: -");
+    m_currentDepartment->setText("現在担当部署: -");
+    m_nextDepartment->setText("次工程部署: -");
+    m_routeHistory->setText("部署履歴: -");
     m_internal->setText("内部ログ要約: -");
 }
 

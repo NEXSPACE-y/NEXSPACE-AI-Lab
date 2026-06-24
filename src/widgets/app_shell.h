@@ -9,6 +9,7 @@
 #include "agent_list_page.h"
 #include "audit_log_table.h"
 #include "dashboard_page.h"
+#include "department_page.h"
 #include "history_table.h"
 #include "settings_page.h"
 #include "system_status_panel.h"
@@ -52,6 +53,7 @@ private:
     TicketBoard* m_ticketBoard = nullptr;
     TicketDetailPanel* m_detailPanel = nullptr;
     DashboardPage* m_dashboard = nullptr;
+    DepartmentPage* m_departmentPage = nullptr;
     AgentListPage* m_agentList = nullptr;
     AuditLogTable* m_auditLog = nullptr;
     HistoryTable* m_history = nullptr;
@@ -60,10 +62,13 @@ private:
 
     QVector<Ticket> m_previousTickets;
     QVector<Ticket> m_tickets;
+    QVector<Department> m_departments;
     QVector<Agent> m_agents;
     QVector<AuditLog> m_previousLogs;
     QVector<AuditLog> m_auditLogs;
     QVector<HistoryEntry> m_historyEntries;
+    QVector<DepartmentEvent> m_departmentEvents;
+    QVector<DepartmentRecord> m_departmentRecords;
     SystemStatus m_status;
     QString m_selectedTicketId;
     QStringList m_errorNotes;

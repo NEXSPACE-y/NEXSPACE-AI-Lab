@@ -22,6 +22,9 @@ private:
     QLabel* m_priority = nullptr;
     QLabel* m_status = nullptr;
     QLabel* m_agent = nullptr;
+    QLabel* m_currentDepartment = nullptr;
+    QLabel* m_nextDepartment = nullptr;
+    QLabel* m_routeHistory = nullptr;
     QLabel* m_auditResult = nullptr;
     QLabel* m_auditCategory = nullptr;
     QLabel* m_recommend = nullptr;

@@ -40,6 +40,7 @@ set(SRC_FILES
     src/widgets/ticket_detail_panel.cpp
     src/widgets/agent_list_page.h
     src/widgets/agent_list_page.cpp
+    src/widgets/department_page.cpp
     src/widgets/audit_log_table.h
     src/widgets/audit_log_table.cpp
     src/widgets/history_table.h
