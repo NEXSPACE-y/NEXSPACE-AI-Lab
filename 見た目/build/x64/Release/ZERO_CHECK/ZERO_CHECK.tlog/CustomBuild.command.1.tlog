@@ -1,0 +1,10 @@
+^C:\USERS\RINPA\DESKTOP\NEXSPACE AI LAB\見た目\BUILD\CMAKEFILES\86773FFB8B8744A4FA95F93587502A71\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/rinpa/Desktop/NEXSPACE AI Lab/見た目" "-BC:/Users/rinpa/Desktop/NEXSPACE AI Lab/見た目/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/rinpa/Desktop/NEXSPACE AI Lab/見た目/build/nexspace_ai_lab_ui.slnx"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

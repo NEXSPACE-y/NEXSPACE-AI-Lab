@@ -9,6 +9,8 @@
 *.log
 *.tmp
 *.cache
+build/
+dist/
 
 # 目録/保存済みデータ
 書類倉庫/
