@@ -1,30 +1,61 @@
 #include "command_input_bar.h"
 #include <QHBoxLayout>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 
 namespace nexspace {
 
 CommandInputBar::CommandInputBar(QWidget* parent)
     : QWidget(parent) {
-    auto* layout = new QVBoxLayout(this);
-    auto* row = new QHBoxLayout();
+    setObjectName("CommandInputBar");
+    setFixedHeight(104);
+
+    auto* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(12, 8, 12, 8);
+    layout->setSpacing(10);
+
     m_input = new QTextEdit();
     m_input->setPlaceholderText("軍令を入力...");
-    m_input->setMinimumHeight(60);
-    m_input->setMaximumHeight(120);
+    m_input->setAcceptRichText(false);
+    m_input->setMinimumHeight(48);
+    m_input->setMaximumHeight(68);
+    m_input->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
     m_submitButton = new QPushButton("札にする");
+    m_submitButton->setFixedWidth(96);
+
     m_modeHint = new QLabel("令札作成モード: 未設定");
+    m_modeHint->setWordWrap(true);
+    m_modeHint->setMaximumWidth(260);
+
     m_status = new QLabel("");
+    m_status->setWordWrap(true);
+    m_status->setMaximumWidth(240);
+
     m_lengthHint = new QLabel(QString("文字数: 0 / %1").arg(kMaxCommandTextLength));
 
-    row->addWidget(m_input, 1);
-    row->addWidget(m_submitButton);
+    auto* labelColumn = new QWidget();
+    auto* labelLayout = new QVBoxLayout(labelColumn);
+    labelLayout->setContentsMargins(0, 0, 0, 0);
+    labelLayout->setSpacing(3);
+    labelLayout->addWidget(new QLabel("軍令入力"));
+    labelLayout->addWidget(m_modeHint);
+    labelLayout->addStretch();
+    labelColumn->setFixedWidth(270);
 
-    layout->addWidget(new QLabel("下部入力（簡易軍令入力）"));
-    layout->addLayout(row);
-    layout->addWidget(m_modeHint);
-    layout->addWidget(m_lengthHint);
-    layout->addWidget(m_status);
+    auto* actionColumn = new QWidget();
+    auto* actionLayout = new QVBoxLayout(actionColumn);
+    actionLayout->setContentsMargins(0, 0, 0, 0);
+    actionLayout->setSpacing(4);
+    actionLayout->addWidget(m_submitButton);
+    actionLayout->addWidget(m_lengthHint);
+    actionLayout->addWidget(m_status);
+    actionLayout->addStretch();
+    actionColumn->setFixedWidth(250);
+
+    layout->addWidget(labelColumn);
+    layout->addWidget(m_input, 1);
+    layout->addWidget(actionColumn);
     setStatusMessage("");
 
     connect(m_submitButton, &QPushButton::clicked, this, &CommandInputBar::onSubmitClicked);
@@ -65,7 +96,10 @@ void CommandInputBar::clearInput() {
 
 void CommandInputBar::refreshLengthHint() {
     const int length = m_input->toPlainText().size();
+    const bool tooLong = length > kMaxCommandTextLength;
     m_lengthHint->setText(QString("文字数: %1 / %2").arg(length).arg(kMaxCommandTextLength));
+    m_lengthHint->setStyleSheet(tooLong ? "color: #f5a55a;" : "color: #cfc09f;");
+    m_submitButton->setEnabled(!tooLong);
 }
 
 CreateTicketInput CommandInputBar::buildInput() const {
@@ -91,4 +125,3 @@ void CommandInputBar::onSubmitClicked() {
 }
 
 } // namespace nexspace
-

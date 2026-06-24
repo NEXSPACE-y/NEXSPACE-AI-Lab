@@ -1,6 +1,8 @@
 #include "command_input_page.h"
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 
 namespace nexspace {
@@ -22,6 +24,8 @@ QString currentModeLabel(const EngineAdapterInfo& info) {
 CommandInputPage::CommandInputPage(QWidget* parent)
     : QWidget(parent) {
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setSpacing(10);
 
     auto* title = new QLabel("軍令入力");
     QFont titleFont = title->font();
@@ -29,27 +33,50 @@ CommandInputPage::CommandInputPage(QWidget* parent)
     titleFont.setBold(true);
     title->setFont(titleFont);
 
+    m_modeHint = new QLabel("モード: 未設定");
+    m_modeHint->setWordWrap(true);
+    m_status = new QLabel("");
+    m_status->setWordWrap(true);
+    m_status->setStyleSheet("color: #c9b67b;");
+
+    auto* content = new QWidget();
+    auto* contentLayout = new QHBoxLayout(content);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(12);
+
     auto* metaGroup = new QGroupBox("依頼札作成");
     auto* metaLayout = new QVBoxLayout(metaGroup);
+    metaLayout->setContentsMargins(12, 18, 12, 12);
+    metaLayout->setSpacing(8);
+
     m_draft = new CommandDraftPanel();
+    m_draft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     m_submit = new QPushButton("札にする");
     m_clear = new QPushButton("下書きクリア");
 
-    auto* buttonRow = new QVBoxLayout();
+    auto* actionGroup = new QGroupBox("札化操作");
+    actionGroup->setFixedWidth(300);
+    actionGroup->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    auto* actionLayout = new QVBoxLayout(actionGroup);
+    actionLayout->setContentsMargins(12, 18, 12, 12);
+    actionLayout->setSpacing(8);
+
+    auto* buttonRow = new QHBoxLayout();
+    buttonRow->setSpacing(8);
     buttonRow->addWidget(m_submit);
     buttonRow->addWidget(m_clear);
 
-    m_modeHint = new QLabel("モード: 未設定");
-    m_status = new QLabel("");
-
     metaLayout->addWidget(m_draft);
-    metaLayout->addLayout(buttonRow);
-    metaLayout->addWidget(m_modeHint);
-    metaLayout->addWidget(m_status);
+    actionLayout->addLayout(buttonRow);
+    actionLayout->addWidget(m_modeHint);
+    actionLayout->addWidget(m_status);
+    actionLayout->addStretch();
 
     layout->addWidget(title);
-    layout->addWidget(metaGroup, 1);
+    contentLayout->addWidget(metaGroup, 1);
+    contentLayout->addWidget(actionGroup);
+    layout->addWidget(content, 1);
 
     connect(m_submit, &QPushButton::clicked, this, &CommandInputPage::onSubmitClicked);
     connect(m_clear, &QPushButton::clicked, this, &CommandInputPage::onClearClicked);
@@ -100,4 +127,3 @@ void CommandInputPage::onClearClicked() {
 }
 
 } // namespace nexspace
-

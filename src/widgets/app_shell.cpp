@@ -27,6 +27,8 @@ AppShell::AppShell(std::unique_ptr<EngineAdapter> adapter, QWidget* parent)
 void AppShell::buildUi() {
     QWidget* container = new QWidget();
     QVBoxLayout* root = new QVBoxLayout(container);
+    root->setContentsMargins(0, 0, 0, 0);
+    root->setSpacing(0);
 
     m_topBar = new TopStatusBar();
     m_sidebar = new QListWidget();
@@ -62,13 +64,13 @@ void AppShell::buildUi() {
     body->addWidget(m_sidebar);
     body->addWidget(m_pages);
     body->addWidget(m_detailPanel);
-    body->setStretchFactor(0, 1);
-    body->setStretchFactor(1, 4);
+    body->setStretchFactor(0, 0);
+    body->setStretchFactor(1, 5);
     body->setStretchFactor(2, 2);
+    body->setSizes({170, 820, 360});
 
     root->addWidget(m_topBar);
     root->addWidget(body, 1);
-    m_commandInputBar->setFixedHeight(190);
     root->addWidget(m_commandInputBar);
     setCentralWidget(container);
 
@@ -80,7 +82,7 @@ void AppShell::buildUi() {
 }
 
 void AppShell::applyStyle() {
-    setMinimumSize(1400, 800);
+    setMinimumSize(1180, 720);
     setStyleSheet(R"(
         QWidget {
             background-color: #0f1629;
@@ -101,6 +103,9 @@ void AppShell::applyStyle() {
         QSplitter::handle {
             background: #2f4270;
         }
+        QSplitter::handle:horizontal {
+            width: 4px;
+        }
         QTableWidget, QListWidget {
             background-color: #15213c;
             alternate-background-color: #111c35;
@@ -111,11 +116,15 @@ void AppShell::applyStyle() {
             color: #fff2c2;
             border: 1px solid #33476d;
         }
-        QLineEdit, QComboBox, QSpinBox, QDateEdit {
+        QLineEdit, QTextEdit, QComboBox, QSpinBox, QDateEdit {
             background-color: #24345a;
             border: 1px solid #48618f;
             color: #f4ebcf;
             padding: 4px;
+            selection-background-color: #3c5f9e;
+        }
+        QTextEdit {
+            border-radius: 4px;
         }
         QPushButton {
             background-color: #29457a;
@@ -123,16 +132,17 @@ void AppShell::applyStyle() {
             padding: 5px;
             min-width: 80px;
         }
-        QTextEdit, QLineEdit {
-            background-color: #1f2d4a;
-            border: 1px solid #465f8f;
-            color: #efe3c5;
-            min-height: 20px;
-        }
         QGroupBox {
             border: 1px solid #32486f;
             margin-top: 6px;
             padding: 6px;
+        }
+        QWidget#CommandInputBar {
+            background-color: #111b33;
+            border-top: 1px solid #32456a;
+        }
+        QWidget#CommandInputBar QLabel {
+            background-color: transparent;
         }
     )");
 }

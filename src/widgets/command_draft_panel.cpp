@@ -2,6 +2,7 @@
 #include <QVariant>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QSizePolicy>
 #include <QVBoxLayout>
 
 namespace nexspace {
@@ -26,7 +27,13 @@ QString roleText(AgentRole role) {
 CommandDraftPanel::CommandDraftPanel(QWidget* parent)
     : QWidget(parent) {
     auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(6);
+
     auto* form = new QFormLayout();
+    form->setContentsMargins(0, 0, 0, 0);
+    form->setSpacing(8);
+    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
     m_titleInput = new QLineEdit("依頼札");
     m_commandInput = new QTextEdit();
@@ -38,8 +45,10 @@ CommandDraftPanel::CommandDraftPanel(QWidget* parent)
     m_errorHint = new QLabel();
 
     m_commandInput->setPlaceholderText("依頼本文を入力...");
-    m_commandInput->setMinimumHeight(110);
-    m_commandInput->setMaximumHeight(160);
+    m_commandInput->setAcceptRichText(false);
+    m_commandInput->setMinimumHeight(220);
+    m_commandInput->setMaximumHeight(360);
+    m_commandInput->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     m_typeInput->addItem("依頼札");
     m_typeInput->addItem("監査票");
@@ -64,6 +73,7 @@ CommandDraftPanel::CommandDraftPanel(QWidget* parent)
     m_agentInput->addItem(QString("本陣 (%1)").arg(roleText(AgentRole::System)),
                           QVariant::fromValue(static_cast<int>(AgentRole::System)));
     m_auditRequired->setChecked(true);
+    m_errorHint->setStyleSheet("color: #f5a55a;");
 
     form->addRow("タイトル", m_titleInput);
     form->addRow("依頼本文", m_commandInput);
