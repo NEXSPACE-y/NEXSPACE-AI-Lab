@@ -15,6 +15,9 @@ public:
     QVector<Agent> getAgents() const override;
     QVector<AuditLog> getAuditLogs() const override;
     QVector<HistoryEntry> getHistory() const override;
+    QVector<Department> getDepartments() const override;
+    QVector<DepartmentEvent> getDepartmentEvents() const override;
+    QVector<DepartmentRecord> getDepartmentRecords() const override;
     void tick() override;
 
 private:

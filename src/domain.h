@@ -40,6 +40,45 @@ enum class TicketPriority {
     critical
 };
 
+enum class DepartmentEventType {
+    Routed,
+    Inspection,
+    Audit,
+    Record,
+    Error
+};
+
+struct Department {
+    QString id;
+    QString name;
+    QString parentId;
+    bool isParent = false;
+    int activeTickets = 0;
+    int completedTickets = 0;
+    int auditWarnings = 0;
+    int inspectionWarnings = 0;
+    int recordCount = 0;
+};
+
+struct DepartmentEvent {
+    QString id;
+    QString ticketId;
+    QString fromDepartmentId;
+    QString toDepartmentId;
+    QString departmentId;
+    DepartmentEventType type = DepartmentEventType::Routed;
+    QString note;
+    QString createdAt;
+};
+
+struct DepartmentRecord {
+    QString id;
+    QString ticketId;
+    QString departmentId;
+    QString summary;
+    QString createdAt;
+};
+
 struct Ticket {
     QString id;
     QString title;
@@ -50,6 +89,10 @@ struct Ticket {
     QString assignedAgentId;
     std::optional<AuditResult> auditResult;
     QString auditCategory;
+    QString currentDepartmentId;
+    QString previousDepartmentId;
+    QString nextDepartmentId;
+    QVector<QString> routeHistory;
     QString createdAt;
     QString updatedAt;
 };
@@ -70,6 +113,7 @@ struct AuditLog {
     QString id;
     QString ticketId;
     QString targetAgentId;
+    QString targetDepartmentId;
     AuditResult result = AuditResult::PASS;
     QString category;
     QString reasonSummary;
@@ -133,6 +177,54 @@ inline QString toJapaneseRole(AgentRole role) {
         case AgentRole::Observer: return "物見";
         case AgentRole::System: return "本陣";
         default: return "不明";
+    }
+}
+
+inline QString toJapaneseDepartment(const QString& departmentId) {
+    if (departmentId == "01_社長室") return "社長室";
+    if (departmentId == "02_秘書室") return "秘書室";
+    if (departmentId == "03_監査室") return "監査室";
+    if (departmentId == "04_戦略室") return "戦略室";
+    if (departmentId == "05_制作室") return "制作室";
+    if (departmentId == "06_営業部") return "営業部";
+    if (departmentId == "07_技術部") return "技術部";
+    if (departmentId == "08_検査部") return "検査部";
+    if (departmentId == "09_総務部") return "総務部";
+    if (departmentId == "10_庶務課") return "庶務課";
+    return departmentId.isEmpty() ? "未割当" : departmentId;
+}
+
+inline QString toString(DepartmentEventType type) {
+    switch (type) {
+        case DepartmentEventType::Routed:
+            return "routed";
+        case DepartmentEventType::Inspection:
+            return "inspection";
+        case DepartmentEventType::Audit:
+            return "audit";
+        case DepartmentEventType::Record:
+            return "record";
+        case DepartmentEventType::Error:
+            return "error";
+        default:
+            return "routed";
+    }
+}
+
+inline QString toJapaneseDepartmentEvent(DepartmentEventType type) {
+    switch (type) {
+        case DepartmentEventType::Routed:
+            return "部署遷移";
+        case DepartmentEventType::Inspection:
+            return "検査";
+        case DepartmentEventType::Audit:
+            return "監査";
+        case DepartmentEventType::Record:
+            return "記録";
+        case DepartmentEventType::Error:
+            return "異常";
+        default:
+            return "部署遷移";
     }
 }
 

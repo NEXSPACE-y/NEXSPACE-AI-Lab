@@ -30,6 +30,9 @@ public:
     virtual QVector<Agent> getAgents() const = 0;
     virtual QVector<AuditLog> getAuditLogs() const = 0;
     virtual QVector<HistoryEntry> getHistory() const = 0;
+    virtual QVector<Department> getDepartments() const = 0;
+    virtual QVector<DepartmentEvent> getDepartmentEvents() const = 0;
+    virtual QVector<DepartmentRecord> getDepartmentRecords() const = 0;
     virtual void tick() = 0;
 };
 

@@ -35,6 +35,18 @@ QVector<HistoryEntry> NoopEngineAdapter::getHistory() const {
     return {};
 }
 
+QVector<Department> NoopEngineAdapter::getDepartments() const {
+    return {};
+}
+
+QVector<DepartmentEvent> NoopEngineAdapter::getDepartmentEvents() const {
+    return {};
+}
+
+QVector<DepartmentRecord> NoopEngineAdapter::getDepartmentRecords() const {
+    return {};
+}
+
 void NoopEngineAdapter::tick() {
 }
 

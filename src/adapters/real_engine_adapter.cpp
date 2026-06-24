@@ -36,6 +36,18 @@ QVector<HistoryEntry> RealEngineAdapter::getHistory() const {
     return {};
 }
 
+QVector<Department> RealEngineAdapter::getDepartments() const {
+    return {};
+}
+
+QVector<DepartmentEvent> RealEngineAdapter::getDepartmentEvents() const {
+    return {};
+}
+
+QVector<DepartmentRecord> RealEngineAdapter::getDepartmentRecords() const {
+    return {};
+}
+
 void RealEngineAdapter::tick() {
     // 未接続時は noop 相当の挙動。接続実装は別途追加される前提。
 }
