@@ -17,11 +17,15 @@
 - `src/widgets/`
   - AppShell / サイドバー遷移 / 上部ステータス / 札場 / 監察ログ / 履歴 / 設定 / 本陣状態
 
-## ビルド
+## ビルド（配布フォルダ前提）
 
 ```powershell
-mkdir build
-cd build
+# まず配布成果物をクリーン
+Remove-Item -Recurse -Force .\build, .\dist -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path .\build | Out-Null
+Set-Location .\build
+
+# CMake 構成後、ビルド（dist/nexspace_ai_lab_ui 配下に exe を作成）
 cmake ..
 cmake --build .
 ```
@@ -29,7 +33,8 @@ cmake --build .
 実行:
 
 ```powershell
-.\nexspace_ai_lab_ui.exe --adapter mock
+# dist 配下の exe から起動（直接 exe コピーではなく dist フォルダ単位で起動）
+..\dist\nexspace_ai_lab_ui\nexspace_ai_lab_ui.exe --adapter mock
 ```
 
 `--adapter` は `mock` / `real` / `noop` を指定できます。  
@@ -57,7 +62,8 @@ winget install --id Kitware.CMake --accept-source-agreements --accept-package-ag
 - Qt
   - Qt Online Installer で Qt 5.15 または 6.x の **Qt Widgets** をインストール
   - Qt の `bin` 配下（例: `C:\\Qt\\...\\bin`）を `PATH` に追加
-  - 本プロジェクトは `Qt5` または `Qt6` の `Widgets` が見つかれば自動で利用します
+- 本プロジェクトは `Qt5` または `Qt6` の `Widgets` が見つかれば自動で利用します
+- このUIは **C++/Qt（Qt Widgets）** です。Python 用バインディング（PyQt/PySide）は使っていません。
 
 ## 仕様上の明示
 
