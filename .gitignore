@@ -1,0 +1,24 @@
+# 生成物
+*.exe
+*.obj
+*.o
+*.ilk
+*.pdb
+*.idb
+*.tlog
+*.log
+*.tmp
+*.cache
+
+# 目録/保存済みデータ
+書類倉庫/
+/書類倉庫
+
+# Windows付属/IDE
+.vs/
+*.user
+*.suo
+*.vcxproj.user
+
+# その他
+*.DS_Store
